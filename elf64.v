@@ -309,16 +309,39 @@ pub fn (e64 Elf64_hdr) save_programs(programs []Elf64_Phdr) {
 	mut raw := &RawElf{}
 	raw.load(e64.filename)
 
+	mut off := e64.e_phoff
+	for p in programs {
+		binary.little_endian_put_u32(mut raw.buff[off..off+4], p.p_type)
+		binary.little_endian_put_u32(mut raw.buff[off+4..off+8], p.p_flags)
+		binary.little_endian_put_u64(mut raw.buff[off+8..off+16], p.p_offset)
+		binary.little_endian_put_u64(mut raw.buff[off+16..off+24], p.p_vaddr)
+		binary.little_endian_put_u64(mut raw.buff[off+24..off+32], p.p_paddr)
+		binary.little_endian_put_u64(mut raw.buff[off+32..off+40], p.p_filesz)
+		binary.little_endian_put_u64(mut raw.buff[off+40..off+48], p.p_memsz)
+	}
 
-	raw.save()
+	raw.save(e64.filename)
 }
 
 pub fn (e64 Elf64_hdr) save_sections(sections []Elf64_Shdr) {
 	mut raw := &RawElf{}
 	raw.load(e64.filename)
 
+	mut off := e64.e_shoff
+	for s in sections {
+		binary.little_endian_put_u32(mut raw.buff[off..off+4], s.sh_name)
+		binary.little_endian_put_u32(mut raw.buff[off+4..off+8], s.sh_type)
+		binary.little_endian_put_u64(mut raw.buff[off+8..off+16], s.sh_flags)
+		binary.little_endian_put_u64(mut raw.buff[off+16..off+24], s.sh_addr)
+		binary.little_endian_put_u64(mut raw.buff[off+24..off+32], s.sh_offset)
+		binary.little_endian_put_u64(mut raw.buff[off+32..off+40], s.sh_size)
+		binary.little_endian_put_u32(mut raw.buff[off+40..off+44], s.sh_link)
+		binary.little_endian_put_u32(mut raw.buff[off+44..off+48], s.sh_info)
+		binary.little_endian_put_u64(mut raw.buff[off+48..off+56], s.sh_addralign)
+		binary.little_endian_put_u64(mut raw.buff[off+56..off+64], s.sh_entsize)
+	}
 
-	raw.save()
+	raw.save(e64.filename)
 }
 
 

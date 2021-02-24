@@ -65,6 +65,8 @@ fn test_elf64() {
 	// modifications
 	//ls.e_ident[1] = `J`
 	ls.save()
+	ls.save_programs(p)
+	ls.save_sections(s)
 
 	assert 1==1
 }

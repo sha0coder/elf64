@@ -150,6 +150,10 @@ pub fn load(filename string) Elf64_hdr {
 	return e64
 }
 
+pub fn (mut e64 Elf64_hdr) set_filename(filename string) {
+	e64.filename = filename 
+}
+
 pub fn (e64 Elf64_hdr) get_programs() []Elf64_Phdr {
 	mut phdrs := []Elf64_Phdr{}
 	mut f := os.open(e64.filename) or { panic("filename not valid") }
@@ -249,10 +253,38 @@ pub fn (e64 Elf64_hdr) get_dynamic() []Elf64_Dyn {
 }
 
 pub fn (e64 Elf64_hdr) get_shstrtab() []byte {
-	shstrtab_section := e64.get_shstrtab_section() or { panic("no shstrtab section") }
-	mut f := os.open(e64.filename) or { panic("filename not valid") }
+	shstrtab_section := e64.get_shstrtab_section() or { panic('no shstrtab section') }
+	mut f := os.open(e64.filename) or { panic('filename not valid') }
 	shs := f.read_bytes_at(int(shstrtab_section.sh_size), int(shstrtab_section.sh_offset))
 	f.close()
 	return shs
 }
    
+pub fn (e64 Elf64_hdr) save() {
+	sz := os.file_size(e64.filename)
+	mut f := os.open(e64.filename) or { panic('cant load the file') }
+	mut buff := f.read_bytes(sz)
+	f.close()
+
+	for i in 0..ei_nident {
+		buff[i] = e64.e_ident[i]
+	}
+ 
+	binary.little_endian_put_u16(mut buff[16..18], e64.e_type)
+	binary.little_endian_put_u16(mut buff[18..20], e64.e_machine)
+	binary.little_endian_put_u32(mut buff[20..24], e64.e_version)
+	binary.little_endian_put_u64(mut buff[24..32], e64.e_entry)
+	binary.little_endian_put_u64(mut buff[32..40], e64.e_phoff)
+	binary.little_endian_put_u64(mut buff[40..48], e64.e_shoff)
+	binary.little_endian_put_u32(mut buff[48..52], e64.e_flags)
+	binary.little_endian_put_u16(mut buff[52..54], e64.e_ehsize)
+	binary.little_endian_put_u16(mut buff[54..56], e64.e_phentsize)
+	binary.little_endian_put_u16(mut buff[56..58], e64.e_phnum)
+	binary.little_endian_put_u16(mut buff[58..60], e64.e_shentsize)
+	binary.little_endian_put_u16(mut buff[60..62], e64.e_shnum)
+	binary.little_endian_put_u16(mut buff[62..64], e64.e_shstrndx)
+
+	f = os.open_file(e64.filename, 'w+', 0755) or { panic('cant save to file $e64.filename') }
+	f.write_to(0, buff) or { panic('cant save the data') }
+	f.close()
+}

@@ -1,9 +1,12 @@
 import elf64 
+import os
 
 fn test_elf64() {
 	println("loading an elf")
 
-	mut ls := elf64.load('/bin/ls')
+	os.cp('/bin/ls','/tmp/ls') or { assert 1==2 }
+
+	mut ls := elf64.load('/tmp/ls')
 
 	assert ls.e_ident[1] == `E`
 	assert ls.e_ident[2] == `L`
@@ -58,5 +61,11 @@ fn test_elf64() {
 	println(slibname)
 
 	assert slibname.contains('.so')
+
+	// modifications
+	//ls.e_ident[1] = `J`
+	ls.save()
+
+	assert 1==1
 }
 

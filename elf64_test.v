@@ -68,4 +68,3 @@ fn test_elf64() {
 
 	assert 1==1
 }
-

@@ -28,7 +28,7 @@ pub const (
 	dt_relaent = 9				/* Size of one Rela reloc */
 	dt_strsz = 10				/* Size of string table */
 	dt_syment = 11				/* Size of one symbol table entry */
-    dt_init = 12				/* Address of init function */
+	dt_init = 12				/* Address of init function */
 	dt_fini = 13				/* Address of termination function */
 	dt_soname = 14 				/* Name of shared object */
 	dt_rpath = 15				/* Library search path (deprecated) */
@@ -45,7 +45,7 @@ pub const (
 	dt_fini_array = 26			/* Array with addresses of fini fct */
 	dt_init_arraysz = 27		/* Size in bytes of DT_INIT_ARRAY */
 	dt_fini_arraysz = 28		/* Size in bytes of DT_FINI_ARRAY */
-    dt_runpath = 29				/* Library search path */
+	dt_runpath = 29				/* Library search path */
 	dt_flags = 30				/* Flags for the object being loaded */
 )
 
@@ -259,32 +259,67 @@ pub fn (e64 Elf64_hdr) get_shstrtab() []byte {
 	f.close()
 	return shs
 }
-   
-pub fn (e64 Elf64_hdr) save() {
-	sz := os.file_size(e64.filename)
-	mut f := os.open(e64.filename) or { panic('cant load the file') }
-	mut buff := f.read_bytes(sz)
-	f.close()
 
-	for i in 0..ei_nident {
-		buff[i] = e64.e_ident[i]
-	}
- 
-	binary.little_endian_put_u16(mut buff[16..18], e64.e_type)
-	binary.little_endian_put_u16(mut buff[18..20], e64.e_machine)
-	binary.little_endian_put_u32(mut buff[20..24], e64.e_version)
-	binary.little_endian_put_u64(mut buff[24..32], e64.e_entry)
-	binary.little_endian_put_u64(mut buff[32..40], e64.e_phoff)
-	binary.little_endian_put_u64(mut buff[40..48], e64.e_shoff)
-	binary.little_endian_put_u32(mut buff[48..52], e64.e_flags)
-	binary.little_endian_put_u16(mut buff[52..54], e64.e_ehsize)
-	binary.little_endian_put_u16(mut buff[54..56], e64.e_phentsize)
-	binary.little_endian_put_u16(mut buff[56..58], e64.e_phnum)
-	binary.little_endian_put_u16(mut buff[58..60], e64.e_shentsize)
-	binary.little_endian_put_u16(mut buff[60..62], e64.e_shnum)
-	binary.little_endian_put_u16(mut buff[62..64], e64.e_shstrndx)
+struct RawElf {
+mut:
+	sz int
+	buff []byte
+}
 
-	f = os.open_file(e64.filename, 'w+', 0755) or { panic('cant save to file $e64.filename') }
-	f.write_to(0, buff) or { panic('cant save the data') }
+fn (mut r RawElf) load(filename string) {
+	r.sz = os.file_size(filename)
+	mut f := os.open(filename) or { panic('cant load the file') }
+	r.buff = f.read_bytes(r.sz)
 	f.close()
 }
+
+fn (mut r RawElf) save(filename string) {
+	mut f := os.open_file(filename, 'w+', 0755) or { panic('cant save to file $filename') }
+	f.write_to(0, r.buff) or { panic('cant save the data') }
+	f.close()
+}
+
+   
+pub fn (e64 Elf64_hdr) save() {
+	mut raw := &RawElf{}
+	raw.load(e64.filename)
+
+	for i in 0..ei_nident {
+		raw.buff[i] = e64.e_ident[i]
+	}
+ 
+	binary.little_endian_put_u16(mut raw.buff[16..18], e64.e_type)
+	binary.little_endian_put_u16(mut raw.buff[18..20], e64.e_machine)
+	binary.little_endian_put_u32(mut raw.buff[20..24], e64.e_version)
+	binary.little_endian_put_u64(mut raw.buff[24..32], e64.e_entry)
+	binary.little_endian_put_u64(mut raw.buff[32..40], e64.e_phoff)
+	binary.little_endian_put_u64(mut raw.buff[40..48], e64.e_shoff)
+	binary.little_endian_put_u32(mut raw.buff[48..52], e64.e_flags)
+	binary.little_endian_put_u16(mut raw.buff[52..54], e64.e_ehsize)
+	binary.little_endian_put_u16(mut raw.buff[54..56], e64.e_phentsize)
+	binary.little_endian_put_u16(mut raw.buff[56..58], e64.e_phnum)
+	binary.little_endian_put_u16(mut raw.buff[58..60], e64.e_shentsize)
+	binary.little_endian_put_u16(mut raw.buff[60..62], e64.e_shnum)
+	binary.little_endian_put_u16(mut raw.buff[62..64], e64.e_shstrndx)
+
+	raw.save(e64.filename)
+}
+
+pub fn (e64 Elf64_hdr) save_programs(programs []Elf64_Phdr) {
+	mut raw := &RawElf{}
+	raw.load(e64.filename)
+
+
+	raw.save()
+}
+
+pub fn (e64 Elf64_hdr) save_sections(sections []Elf64_Shdr) {
+	mut raw := &RawElf{}
+	raw.load(e64.filename)
+
+
+	raw.save()
+}
+
+
+

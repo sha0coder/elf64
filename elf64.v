@@ -92,16 +92,6 @@ pub mut:
 	sh_entsize u64
 }
 
-pub struct Elf64_Sym {
-pub mut:
-	st_name u32 
-	st_info byte 
-	st_other byte 
-	st_shndx u16
-	st_value u64 
-	st_size u64
-}
-
 pub struct Elf64_Rel {
 pub mut:
 	r_offset u64 
@@ -121,7 +111,7 @@ pub mut:
 	d_val u64
 }
 
-pub sturct Elf64_Sym {
+pub struct Elf64_Sym {
 pub mut:
 	st_name u64 
 	st_info byte 
@@ -214,11 +204,11 @@ pub fn (e64 Elf64_hdr) get_sections() []Elf64_Shdr {
 	return shdrs
 }
 
-pub fn (e64 Elf64_hdr) get_section(section int) ?Elf64_Shdr {
+pub fn (e64 Elf64_hdr) get_section(section_type int) ?Elf64_Shdr {
 	sections := e64.get_sections()
 
 	for section in sections {
-		if section.sh_type == section {
+		if section.sh_type == section_type {
 			return section
 		}
 	}

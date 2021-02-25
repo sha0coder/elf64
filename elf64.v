@@ -10,6 +10,10 @@ pub const (
 	elf64_shdr_sz = 64
 	elf64_dyn_sz = 16
 
+	section_type_dynsym = 11
+	section_type_shstrtab = 3
+	section_type_dynamic = 6
+
 	// Elf64_Dyn dt_tag constants
 	dt_null = 0 				/* Marks end of dynamic section */
 	dt_needed = 1				/* Name of needed library */
@@ -117,7 +121,15 @@ pub mut:
 	d_val u64
 }
 
-
+pub sturct Elf64_Sym {
+pub mut:
+	st_name u64 
+	st_info byte 
+	st_other byte 
+	st_shndx u16 
+	st_value u64 
+	st_size u64
+}
   
 pub fn load(filename string) Elf64_hdr {
 	mut e64 := Elf64_hdr{}
@@ -202,26 +214,27 @@ pub fn (e64 Elf64_hdr) get_sections() []Elf64_Shdr {
 	return shdrs
 }
 
-pub fn (e64 Elf64_hdr) get_dyn_section() ?Elf64_Shdr {
+pub fn (e64 Elf64_hdr) get_section(section int) ?Elf64_Shdr {
 	sections := e64.get_sections()
 
 	for section in sections {
-		if section.sh_type == 6 {
+		if section.sh_type == section {
 			return section
 		}
 	}
-	return error('Dyn section not found!')
+	return error('section not found!')
+}
+
+pub fn (e64 Elf64_hdr) get_dynsym_section() ?Elf64_Shdr {
+	return e64.get_section(section_type_dynsym)
+}
+
+pub fn (e64 Elf64_hdr) get_dyn_section() ?Elf64_Shdr {
+	return e64.get_section(section_type_dynamic)
 }
 
 pub fn (e64 Elf64_hdr) get_shstrtab_section() ?Elf64_Shdr {
-	sections := e64.get_sections()
-
-	for section in sections {
-		if section.sh_type == 3 {
-			return section
-		}
-	}
-	return error('Shstrtab section not found!')
+	return e64.get_section(section_type_shstrtab)
 }
 
 pub fn (e64 Elf64_hdr) get_dynamic() []Elf64_Dyn {

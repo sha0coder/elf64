@@ -65,6 +65,5 @@ fn test_elf64() {
 	ls.save_sections(s)
 	ls.save_dynamics(dynamics)
 	ls.save_shstrtab(shs)
+	ls.save_symbols(syms)
 }
-
-

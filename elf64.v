@@ -418,3 +418,23 @@ pub fn (e64 Elf64_hdr) save_shstrtab(shstrtab []byte) {
 	raw.save(e64.filename)	
 }
 
+pub fn (e64 Elf64_hdr) save_symbols(syms []Elf64_Sym) {
+	sym_section := e64.get_dynsym_section() or { panic('No dynsym symbol section') }
+	mut off := int(sym_section.sh_offset)
+	mut raw := &RawElf{}
+	raw.load(e64.filename)
+
+	for sym in syms {
+		binary.little_endian_put_u32(mut raw.buff[off..off+4], sym.st_name)
+		raw.buff[off+4] = sym.st_info 
+		raw.buff[off+5] = sym.st_other 
+		binary.little_endian_put_u16(mut raw.buff[off+6..off+8], sym.st_shndx)
+		binary.little_endian_put_u64(mut raw.buff[off+8..off+16], sym.st_value)
+		binary.little_endian_put_u64(mut raw.buff[off+16..off+24], sym.st_size)
+
+		off += int(sym_section.sh_entsize)
+	}
+	
+	raw.save(e64.filename)
+}
+

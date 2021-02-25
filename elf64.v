@@ -356,3 +356,17 @@ pub fn (e64 Elf64_hdr) save_dynamics(dynamics []Elf64_Dyn) {
 
 	raw.save(e64.filename)
 }
+
+pub fn (e64 Elf64_hdr) save_shstrtab(shstrtab []byte) {
+	shs_section := e64.get_shstrtab_section() or { panic("No shstrtab section") }
+
+	mut off := int(shs_section.sh_offset)
+	mut raw := &RawElf{}
+	raw.load(e64.filename)
+
+	for i in 0..shstrtab.len {
+		raw.buff[off + i] = shstrtab[i]
+	}
+
+	raw.save(e64.filename)	
+}

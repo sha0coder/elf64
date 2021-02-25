@@ -42,25 +42,22 @@ fn test_elf64() {
 	dynamics := ls.get_dynamic()
 
 	tag := dynamics[0].d_tag
-	first_lib_off := dynamics[0].d_val
-	println('first library to be loaded is in offset: $first_lib_off and tag: $tag')
-
+	
 	assert tag == elf64.dt_needed
 
 
 	shs := ls.get_shstrtab()
 
+	libname := ls.get_shstrtab_offset(int(dynamics[0].d_val))
+	println(libname)
 
-	mut libname := []byte{}
-	for i in dynamics[0].d_val..shs.len {
-		if shs[i] == 0 { break }
-		libname << shs[i]
+	assert libname.contains('.so')
+
+	syms := ls.get_symbols()
+
+	for i, sym in syms {
+		println('$i) value: $sym.st_value.hex()')
 	}
-
-	slibname := string(libname)
-	println(slibname)
-
-	assert slibname.contains('.so')
 
 	// save modifications in structures
 	ls.save() // save elf header

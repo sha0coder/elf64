@@ -9,6 +9,7 @@ pub const (
 	elf64_phdr_sz = 48
 	elf64_shdr_sz = 64
 	elf64_dyn_sz = 16
+	elf64_sym_sz = 24
 
 	section_type_dynsym = 11
 	section_type_shstrtab = 3
@@ -113,7 +114,7 @@ pub mut:
 
 pub struct Elf64_Sym {
 pub mut:
-	st_name u64 
+	st_name u32
 	st_info byte 
 	st_other byte 
 	st_shndx u16 
@@ -240,14 +241,38 @@ pub fn (e64 Elf64_hdr) get_dynamic() []Elf64_Dyn {
 		dyn.d_val = binary.little_endian_u64(buff[8..16])
 
 		dyns << dyn
-
 		if dyn.d_tag == dt_null { break }
-		
 		off += dyn_section.sh_entsize
 	}
 
 	f.close()
 	return dyns
+}
+
+pub fn (e64 Elf64_hdr) get_symbols() []Elf64_Sym {
+	mut syms := []Elf64_Sym{}
+	sym_section := e64.get_dynsym_section() or { panic('no synsym section') }
+	mut f := os.open(e64.filename) or { panic("filename not valid") }
+	mut off := sym_section.sh_offset
+	num_entries := sym_section.sh_size / sym_section.sh_entsize 
+
+	for _ in 0..num_entries {
+		mut sym := Elf64_Sym{}
+		buff := f.read_bytes_at(int(sym_section.sh_entsize), int(off))		
+
+		sym.st_name = binary.little_endian_u32(buff[0..4])
+		sym.st_info = buff[4]
+		sym.st_other = buff[5]
+		sym.st_shndx = binary.little_endian_u16(buff[6..8])
+		sym.st_value = binary.little_endian_u64(buff[8..16])
+		sym.st_size = binary.little_endian_u64(buff[16..24])
+
+		off += sym_section.sh_entsize
+		syms << sym
+	}
+
+	f.close()
+	return syms
 }
 
 pub fn (e64 Elf64_hdr) get_shstrtab() []byte {
@@ -257,6 +282,25 @@ pub fn (e64 Elf64_hdr) get_shstrtab() []byte {
 	f.close()
 	return shs
 }
+
+pub fn (e64 Elf64_hdr) get_shstrtab_offset(off int) string {
+	shs := e64.get_shstrtab()
+
+	mut bstr := []byte{}
+	for i in off..shs.len {
+		if shs[i] == 0 { break }
+		bstr << shs[i]
+	}
+
+	if bstr.len == 0 {
+		return ''
+	}
+
+	return string(bstr)
+}
+
+
+/*********************************/
 
 struct RawElf {
 mut:
@@ -373,3 +417,4 @@ pub fn (e64 Elf64_hdr) save_shstrtab(shstrtab []byte) {
 
 	raw.save(e64.filename)	
 }
+

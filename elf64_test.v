@@ -62,11 +62,11 @@ fn test_elf64() {
 
 	assert slibname.contains('.so')
 
-	// modifications
-	//ls.e_ident[1] = `J`
-	ls.save()
+	// save modifications in structures
+	ls.save() // save elf header
 	ls.save_programs(p)
 	ls.save_sections(s)
-
-	assert 1==1
+	ls.save_dynamics(dynamics)
 }
+
+

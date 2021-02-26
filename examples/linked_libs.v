@@ -1,13 +1,13 @@
 /*
 	This code extract the linked libs from the dynamic section.
-	readelf --dynamic /bin/ls | grep NEEDED
+	like: readelf --dynamic /bin/ls | grep NEEDED
 
 
 	~/s/e/examples ❯❯❯ ./linked_libs /bin/bash
 	0) libtinfo.so.6
 	1) libdl.so.2
 	2) libc.so.6
-	
+
 */
 
 

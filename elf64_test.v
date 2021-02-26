@@ -39,16 +39,16 @@ fn test_elf64() {
 		println('$i) sh_name: $sect.sh_name ')
 	}
 
-	dynamics := ls.get_dynamic()
+	dyns := ls.get_dynamic()
 
-	tag := dynamics[0].d_tag
+	tag := dyns[0].d_tag
 	
 	assert tag == elf64.dt_needed
 
 
 	shs := ls.get_shstrtab()
 
-	libname := ls.get_shstrtab_offset(int(dynamics[0].d_val))
+	libname := ls.get_shstrtab_offset(int(dyns[0].d_val))
 	println(libname)
 
 	assert libname.contains('.so')
@@ -59,11 +59,18 @@ fn test_elf64() {
 		println('$i) value: $sym.st_value.hex()')
 	}
 
+	for i, dyn in dyns {
+		if dyn.d_tag == elf64.dt_needed {
+			lib := ls.get_shstrtab_offset(int(dyn.d_val))
+			println('$i) $lib')
+		}
+	}
+
 	// save modifications in structures
 	ls.save() // save elf header
 	ls.save_programs(p)
 	ls.save_sections(s)
-	ls.save_dynamics(dynamics)
+	ls.save_dynamics(dyns)
 	ls.save_shstrtab(shs)
 	ls.save_symbols(syms)
 }

@@ -11,7 +11,7 @@
 */
 
 
-import elf64
+import sha0coder_v.elf64
 import os 
 
 if os.args.len < 2 {
